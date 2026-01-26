@@ -9,14 +9,16 @@
     let canvas = $state<HTMLCanvasElement | null>(null);
     let ctx: CanvasRenderingContext2D | null = null;
 
-    const WIDTH = 800;
-    const HEIGHT = 200;
-
-    let offsetX = 0;
-    const SPEED = 120;
-
+    //Preload
     const bg = new Image();
     bg.src = "/bg-road.png";
+
+    //Config init
+    const WIDTH = 800;
+    const HEIGHT = 200;
+    const SPEED = 600;
+
+    let offsetX = 0;
 
     function init() {
         ctx = canvas!.getContext("2d")!;
@@ -41,13 +43,10 @@
     $effect(() => {
         if (!canvas || ctx) return;
         init();
-
-        if (bg.complete && bg.naturalWidth > 0) {
-            loop.start();
-        }
     });
 
     bg.onload = () => {
+        offsetX = 0;
         if (ctx) loop.start();
     };
 

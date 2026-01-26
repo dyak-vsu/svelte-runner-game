@@ -5,6 +5,10 @@ export function drawBackground(
     height: number,
     offsetX: number
 ): void {
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(image, offsetX, height - (height * 0.2));
+    const imgW = image.width;
+    let leadingOffsetX = -(-offsetX % imgW)
+    let followingOffsetX = leadingOffsetX + imgW
+
+    ctx.drawImage(image, leadingOffsetX, height - (height * 0.2));
+    ctx.drawImage(image, followingOffsetX, height - (height * 0.2));
 }
