@@ -3,10 +3,8 @@
     import { createRafLoop } from "./game/raf";
     import { onDestroy } from "svelte";
 
-    let { api = $bindable<{
-        start: () => void;
-        stop: () => void;
-    }>() } = $props();
+    type GameApi = { start: () => void; stop: () => void };
+    let { api = $bindable<GameApi>() } = $props();
 
     let canvas = $state<HTMLCanvasElement | null>(null);
     let ctx: CanvasRenderingContext2D | null = null;
@@ -25,10 +23,19 @@
         ctx.imageSmoothingEnabled = false;
     }
 
-    const loop = createRafLoop((dt) => {
-        if (!ctx || bg.naturalWidth === 0) return;
+    function ready(): boolean {
+        return !!ctx && bg.naturalWidth > 0;
+    }
+
+    function tick(dt: number) {
         offsetX -= SPEED * dt;
-        drawBackground(ctx, bg, WIDTH, HEIGHT, offsetX);
+        ctx!.clearRect(0, 0, WIDTH, HEIGHT);
+        drawBackground(ctx!, bg, WIDTH, HEIGHT, offsetX);
+    }
+
+    const loop = createRafLoop((dt) => {
+        if (!ready()) return;
+        tick(dt);
     });
 
     $effect(() => {
