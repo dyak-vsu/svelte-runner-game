@@ -1,7 +1,10 @@
 <script lang="ts">
-    import { drawBackground } from "./game/drawBackground";
-    import { createRafLoop } from "./game/raf";
     import { onDestroy } from "svelte";
+    import { drawBackground } from "./game/drawBackground";
+    import { createPlayer, updatePlayer, drawPlayer, jump } from "./game/player";
+    import { createRafLoop } from "./game/raf";
+
+    import { defaultGameConfig } from "./configs/defaultGame";
 
     type GameApi = { start: () => void; stop: () => void };
     let { api = $bindable<GameApi>() } = $props();
@@ -9,16 +12,24 @@
     let canvas = $state<HTMLCanvasElement | null>(null);
     let ctx: CanvasRenderingContext2D | null = null;
 
-    //Preload
+    // ===== CONFIG =====
+    const config = defaultGameConfig;
+    const worldConfig = config.world;
+    const playerConfig = config.player;
+
+    const WIDTH = worldConfig.width;
+    const HEIGHT = worldConfig.height;
+
+    // Сейчас используем baseSpeed как скорость скролла
+    const SPEED = worldConfig.baseSpeed;
+
+    // ===== ASSET =====
     const bg = new Image();
     bg.src = "/bg-road.png";
 
-    //Config init
-    const WIDTH = 800;
-    const HEIGHT = 200;
-    const SPEED = 600;
-
+    // ===== STATE =====
     let offsetX = 0;
+    let player = createPlayer(worldConfig, playerConfig);
 
     function init() {
         ctx = canvas!.getContext("2d")!;
@@ -31,8 +42,28 @@
 
     function tick(dt: number) {
         offsetX -= SPEED * dt;
+
+        updatePlayer(player, dt, worldConfig);
+
         ctx!.clearRect(0, 0, WIDTH, HEIGHT);
         drawBackground(ctx!, bg, WIDTH, HEIGHT, offsetX);
+
+        // земля (линия)
+        ctx!.fillRect(0, worldConfig.groundLevelY, WIDTH, 2);
+
+        // игрок
+        drawPlayer(ctx!, player);
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+        if (e.code === "Space" || e.code === "ArrowUp") {
+            e.preventDefault();
+            jump(player, playerConfig);
+        }
+    }
+
+    function onPointerDown() {
+        jump(player, playerConfig);
     }
 
     const loop = createRafLoop((dt) => {
@@ -43,10 +74,12 @@
     $effect(() => {
         if (!canvas || ctx) return;
         init();
+        window.addEventListener("keydown", onKeyDown);
     });
 
     bg.onload = () => {
         offsetX = 0;
+        player = createPlayer(worldConfig, playerConfig);
         if (ctx) loop.start();
     };
 
@@ -55,14 +88,22 @@
         stop: () => loop.stop()
     };
 
-    onDestroy(() => loop.stop());
+    onDestroy(() => {
+        loop.stop();
+        window.removeEventListener("keydown", onKeyDown);
+    });
 </script>
 
-<canvas bind:this={canvas} width={WIDTH} height={HEIGHT}></canvas>
+<canvas bind:this={canvas}
+        width={WIDTH}
+        height={HEIGHT}
+        onpointerdown={onPointerDown}>
+</canvas>
 
 <style>
     canvas {
         border: 1px solid #ccc;
         image-rendering: pixelated;
+        touch-action: manipulation;
     }
 </style>

@@ -1,40 +1,34 @@
-// ===== WORLD =====
-export interface WorldConfig {
+export type WorldConfig = {
     width: number;
     height: number;
-    gravity: number;
-    groundY: number;
-    baseSpeed: number;
-    maxSpeed: number;
-}
 
-// ===== PLAYER =====
-export interface PlayerConfig {
-    startX: number;
+    gravity: number;     // px/s^2
+    groundLevelY: number;   // y уровня земли
+    baseSpeed: number;   // px/s
+    maxSpeed: number;    // px/s
+};
+
+export type PlayerConfig = {
+    positionX: number;
     width: number;
     height: number;
-    jumpVelocity: number;
-    shootCooldownMs: number;
-    maxLives: number;
-}
+    jumpVelocity: number; // px/s
+};
 
-// ===== DAMAGE =====
-export interface DamageConfig {
+export type DamageConfig = {
     collision: number;
     enemyBullet: number;
-}
+};
 
-// ===== SCORING =====
-export interface ScoringConfig {
+export type ScoringConfig = {
     distancePerSecond: number;
     killEnemy: number;
     collectCoin: number;
-}
+};
 
-// ===== ROOT =====
-export interface GameConfig {
+export type GameConfig = {
     world: WorldConfig;
     player: PlayerConfig;
     damage: DamageConfig;
     scoring: ScoringConfig;
-}
+};
