@@ -6,7 +6,7 @@ export const defaultGameConfig: GameConfig = {
         height: 200,
         gravity: 2400,
         groundLevelY: 170,
-        baseSpeed: 300,
+        baseSpeed: 600,
         maxSpeed: 600
     },
     player: {

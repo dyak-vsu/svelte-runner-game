@@ -2,7 +2,10 @@
     import { onDestroy } from "svelte";
     import { drawBackground } from "./game/drawBackground";
     import { createPlayer, updatePlayer, drawPlayer, jump } from "./game/player";
+    import { createObstaclesState, updateObstacles, drawObstacles, hasCollision } from "./game/obstacles";
     import { createRafLoop } from "./game/raf";
+    import { createEnemiesState, updateEnemies, drawEnemies, hasEnemyCollision } from "./game/enemies";
+
 
     import { defaultGameConfig } from "./configs/defaultGame";
 
@@ -30,6 +33,9 @@
     // ===== STATE =====
     let offsetX = 0;
     let player = createPlayer(worldConfig, playerConfig);
+    let obstacles = createObstaclesState();
+    let enemies = createEnemiesState();
+    let isGameOver = false;
 
     function init() {
         ctx = canvas!.getContext("2d")!;
@@ -44,6 +50,8 @@
         offsetX -= SPEED * dt;
 
         updatePlayer(player, dt, worldConfig);
+        updateObstacles(obstacles, dt, worldConfig, SPEED);
+        updateEnemies(enemies, dt, worldConfig, SPEED);
 
         ctx!.clearRect(0, 0, WIDTH, HEIGHT);
         drawBackground(ctx!, bg, WIDTH, HEIGHT, offsetX);
@@ -53,6 +61,22 @@
 
         // игрок
         drawPlayer(ctx!, player);
+        drawObstacles(ctx!, obstacles, worldConfig);
+        drawEnemies(ctx!, enemies, worldConfig);
+
+        if (hasCollision(player, obstacles, worldConfig)) {
+            console.log("COLLISION! stopping loop", { running: loop.isRunning?.() });
+            isGameOver = true;
+            loop.stop();
+            console.log("AFTER stop", { running: loop.isRunning?.() });
+            return; // <-- ВАЖНО
+        }
+
+        if (hasCollision(player, obstacles, worldConfig) || hasEnemyCollision(player, enemies, worldConfig)) {
+            isGameOver = true;
+            loop.stop();
+            return;
+        }
     }
 
     function onKeyDown(e: KeyboardEvent) {
@@ -80,6 +104,9 @@
     bg.onload = () => {
         offsetX = 0;
         player = createPlayer(worldConfig, playerConfig);
+        obstacles = createObstaclesState();
+        enemies = createEnemiesState();
+        isGameOver = false;
         if (ctx) loop.start();
     };
 
