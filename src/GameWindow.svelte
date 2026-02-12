@@ -35,10 +35,13 @@
     const config = defaultGameConfig;
     const worldConfig = config.world;
     const playerConfig = config.player;
+    const damageConfig = config.damage;
+    const scoringConfig = config.scoring;
 
     const WIDTH = worldConfig.width;
     const HEIGHT = worldConfig.height;
     const SPEED = worldConfig.baseSpeed;
+    const HURT_COOLDOWN_SEC = 0.6;
 
     // ===== ASSET =====
     const bg = new Image();
@@ -50,12 +53,21 @@
     let hazards = createHazardsState();
     let projectiles = createProjectilesState();
     let isGameOver = false;
+    let lives = playerConfig.maxLives ?? 3;
+    let hurtCooldownSec = 0;
+    let score = 0;
+    let distanceAcc = 0;
+
 
     function resetGame() {
         offsetX = 0;
+        score = 0;
+        distanceAcc = 0;
         player = createPlayer(worldConfig, playerConfig);
         hazards = createHazardsState();
         projectiles = createProjectilesState();
+        lives = playerConfig.maxLives ?? 3;
+        hurtCooldownSec = 0;
         isGameOver = false;
     }
 
@@ -71,12 +83,20 @@
     function tick(dt: number) {
         if (isGameOver) return;
 
+        distanceAcc += scoringConfig.distancePerSecond * dt;
+        const add = Math.floor(distanceAcc);
+        if (add > 0) {
+            score += add;
+            distanceAcc -= add;
+        }
+
         offsetX -= SPEED * dt;
+        hurtCooldownSec = Math.max(0, hurtCooldownSec - dt);
 
         updatePlayer(player, dt, worldConfig);
         updateHazards(hazards, dt, worldConfig, SPEED);
 
-        // shooters shoot
+        // shoot
         for (const shooter of getReadyShooters(hazards)) {
             const shotX = shooter.x - 2;
             const shotY = worldConfig.groundLevelY - shooter.height + 16;
@@ -88,19 +108,20 @@
 
         // collisions
         if (hasHazardCollision(player, hazards, worldConfig)) {
-            isGameOver = true;
-            loop.stop();
-            return;
+            applyDamage(damageConfig.collision ?? 1);
+            if (isGameOver) return;
         }
+
         const result = resolveProjectileCollisions(player, hazards, projectiles, worldConfig);
 
+        addKillScore(result.removedHazardIds);
+
         if (result.playerHitByEnemyProjectile) {
-            isGameOver = true;
-            loop.stop();
-            return;
+            applyDamage(damageConfig.enemyBullet ?? 1);
         }
 
         applyProjectileCollisionResult(hazards, projectiles, result);
+        if (isGameOver) return;
 
         // draw
         ctx!.clearRect(0, 0, WIDTH, HEIGHT);
@@ -110,6 +131,12 @@
         drawPlayer(ctx!, player);
         drawHazards(ctx!, hazards, worldConfig);
         drawProjectiles(ctx!, projectiles);
+        ctx!.save();
+        ctx!.fillStyle = "black";
+        ctx!.font = "14px monospace";
+        ctx!.fillText(`Lives: ${lives}`, 10, 18);
+        ctx!.fillText(`Score: ${score}`, 10, 36);
+        ctx!.restore();
     }
 
     function onShoot() {
@@ -117,6 +144,17 @@
         const x = player.positionX + player.width + 4;
         const y = player.feetY - player.height + 16;
         spawnPlayerShot(projectiles, x, y);
+    }
+
+    function addKillScore(removedHazardIds: number[]) {
+        const killedIds = new Set(removedHazardIds);
+        if (killedIds.size === 0) return;
+
+        let kills = 0;
+        for (const h of hazards.items) {
+            if (killedIds.has(h.id) && h.kind !== "cactus") kills++;
+        }
+        score += kills * scoringConfig.killEnemy;
     }
 
     function onKeyDown(e: KeyboardEvent) {
@@ -149,6 +187,19 @@
         init();
         window.addEventListener("keydown", onKeyDown);
     });
+
+    function applyDamage(amount: number) {
+        if (amount <= 0) return;
+        if (hurtCooldownSec > 0) return; // уже “в броне”
+
+        lives -= amount;
+        hurtCooldownSec = HURT_COOLDOWN_SEC;
+
+        if (lives <= 0) {
+            isGameOver = true;
+            loop.stop();
+        }
+    }
 
     bg.onload = () => {
         resetGame();

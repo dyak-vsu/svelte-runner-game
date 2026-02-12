@@ -12,6 +12,7 @@ export type PlayerConfig = {
     positionX: number;
     width: number;
     height: number;
+    maxLives: number;
     jumpVelocity: number; // px/s
 };
 

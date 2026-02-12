@@ -6,6 +6,7 @@ export type Player = {
     width: number;
     height: number;
     verticalVelocity: number;
+    maxLives: number;
     isOnGround: boolean;
 };
 
@@ -15,6 +16,7 @@ export function createPlayer(worldConfig: WorldConfig, playerConfig: PlayerConfi
         feetY: worldConfig.groundLevelY,
         width: playerConfig.width,
         height: playerConfig.height,
+        maxLives: playerConfig.maxLives,
         verticalVelocity: 0,
         isOnGround: true
     };

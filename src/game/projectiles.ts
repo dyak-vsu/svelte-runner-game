@@ -81,6 +81,7 @@ function aabb(ax: number, ay: number, aw: number, ah: number, bx: number, by: nu
 
 export type ProjectileCollisionResult = {
     playerHitByEnemyProjectile: boolean;
+    enemyProjectileHitId: number | null;
     removedHazardIds: number[];        // кого убили пули игрока
     removedProjectileIds: number[];    // какие пули удалить (попавшие)
 };
@@ -115,13 +116,14 @@ export function resolveProjectileCollisions(
         if (hit) {
             return {
                 playerHitByEnemyProjectile: true,
+                enemyProjectileHitId: p.id,
                 removedHazardIds: [],
                 removedProjectileIds: []
             };
         }
     }
 
-    //player -> hazards (не cactus)
+    //player -> hazards
     const removedHazardIds: number[] = [];
     const removedProjectileIds: number[] = [];
 
@@ -139,12 +141,13 @@ export function resolveProjectileCollisions(
 
             removedHazardIds.push(h.id);
             removedProjectileIds.push(p.id);
-            break; // одна пуля — одно попадание
+            break;
         }
     }
 
     return {
         playerHitByEnemyProjectile: false,
+        enemyProjectileHitId: null,
         removedHazardIds,
         removedProjectileIds
     };
@@ -163,5 +166,10 @@ export function applyProjectileCollisionResult(
     if (result.removedProjectileIds.length) {
         const removed = new Set(result.removedProjectileIds);
         projectiles.items = projectiles.items.filter((p) => !removed.has(p.id));
+    }
+
+    if (result.enemyProjectileHitId !== null) {
+        const id = result.enemyProjectileHitId;
+        projectiles.items = projectiles.items.filter((p) => p.id !== id);
     }
 }
