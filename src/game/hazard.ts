@@ -122,11 +122,16 @@ export function updateHazards(state: HazardsState, dt: number, world: WorldConfi
 }
 
 export function drawHazards(ctx: CanvasRenderingContext2D, state: HazardsState, world: WorldConfig) {
+    ctx.save();
     for (const h of state.items) {
         const y = world.groundLevelY - h.height;
-        ctx.fillStyle = h.kind === "cactus" ? "black" : h.kind === "fighter" ? "red" : "purple";
+        ctx.fillStyle =
+            h.kind === "cactus" ? "black" :
+                h.kind === "fighter" ? "red" :
+                    "purple";
         ctx.fillRect(h.x, y, h.width, h.height);
     }
+    ctx.restore();
 }
 
 export function getReadyShooters(state: HazardsState): ShooterHazard[] {

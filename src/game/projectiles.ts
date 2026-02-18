@@ -69,10 +69,12 @@ export function updateProjectiles(state: ProjectilesState, dt: number, world: Wo
 }
 
 export function drawProjectiles(ctx: CanvasRenderingContext2D, state: ProjectilesState) {
+    ctx.save();
     for (const b of state.items) {
         ctx.fillStyle = b.source === "player" ? "white" : "orange";
         ctx.fillRect(b.x, b.y, b.width, b.height);
     }
+    ctx.restore();
 }
 
 function aabb(ax: number, ay: number, aw: number, ah: number, bx: number, by: number, bw: number, bh: number) {

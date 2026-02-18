@@ -151,7 +151,7 @@
         drawProjectiles(ctx!, projectiles);
         drawCoins(ctx!, coins);
         ctx!.save();
-        ctx!.fillStyle = "black";
+        ctx!.fillStyle = "white";
         ctx!.font = "14px monospace";
         ctx!.fillText(`Lives: ${lives}`, 10, 18);
         ctx!.fillText(`Score: ${score}`, 10, 36);
