@@ -33,7 +33,7 @@
 
     import { defaultGameConfig } from "./configs/defaultGame";
 
-    type GameApi = { start: () => void; stop: () => void };
+    type GameApi = { start: () => void; stop: () => void; jump: () => void; shoot: () => void; restart: () => void;};
     let { api = $bindable<GameApi>() } = $props();
 
     let canvas = $state<HTMLCanvasElement | null>(null);
@@ -228,7 +228,20 @@
 
     api = {
         start: () => loop.start(),
-        stop: () => loop.stop()
+        stop: () => loop.stop(),
+        jump: () => {
+            if (!isGameOver) jump(player, playerConfig);
+        },
+        shoot: () => {
+            if (isGameOver) return;
+            const x = player.positionX + player.width + 4;
+            const y = player.feetY - player.height + 16;
+            spawnPlayerShot(projectiles, x, y);
+        },
+        restart: () => {
+            resetGame();
+            loop.start();
+        }
     };
 
     onDestroy(() => {
