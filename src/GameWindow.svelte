@@ -23,6 +23,14 @@
         applyProjectileCollisionResult
     } from "./game/projectiles";
 
+    import {
+        createCoinsState,
+        updateCoins,
+        drawCoins,
+        resolveCoinCollection,
+        removeCollectedCoins
+    } from "./game/coins";
+
     import { defaultGameConfig } from "./configs/defaultGame";
 
     type GameApi = { start: () => void; stop: () => void };
@@ -57,6 +65,8 @@
     let hurtCooldownSec = 0;
     let score = 0;
     let distanceAcc = 0;
+    let coins = createCoinsState();
+
 
 
     function resetGame() {
@@ -68,6 +78,7 @@
         projectiles = createProjectilesState();
         lives = playerConfig.maxLives ?? 3;
         hurtCooldownSec = 0;
+        coins = createCoinsState();
         isGameOver = false;
     }
 
@@ -95,6 +106,7 @@
 
         updatePlayer(player, dt, worldConfig);
         updateHazards(hazards, dt, worldConfig, SPEED);
+        updateCoins(coins, dt, worldConfig, SPEED);
 
         // shoot
         for (const shooter of getReadyShooters(hazards)) {
@@ -110,6 +122,12 @@
         if (hasHazardCollision(player, hazards, worldConfig)) {
             applyDamage(damageConfig.collision ?? 1);
             if (isGameOver) return;
+        }
+
+        const collected = resolveCoinCollection(player, coins);
+        if (collected.length > 0) {
+            score += collected.length * scoringConfig.collectCoin;
+            removeCollectedCoins(coins, collected);
         }
 
         const result = resolveProjectileCollisions(player, hazards, projectiles, worldConfig);
@@ -131,6 +149,7 @@
         drawPlayer(ctx!, player);
         drawHazards(ctx!, hazards, worldConfig);
         drawProjectiles(ctx!, projectiles);
+        drawCoins(ctx!, coins);
         ctx!.save();
         ctx!.fillStyle = "black";
         ctx!.font = "14px monospace";
